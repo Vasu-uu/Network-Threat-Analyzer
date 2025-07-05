@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Threat Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-dark: #0f172a;
+            --primary-blue: #3b82f6;
+            --primary-blue-light: #60a5fa;
+            --cyber-green: #10b981;
+            --cyber-red: #ef4444;
+            --cyber-purple: #8b5cf6;
+            --cyber-yellow: #f59e0b;
+            --dark-bg: #1e293b;
+            --card-bg: #334155;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5 {
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            max-width: 1200px;
+        }
+
+        #dropZone {
+            background: linear-gradient(145deg, var(--primary-dark), var(--card-bg));
+            border: 2px dashed var(--primary-blue-light);
+            border-radius: 16px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        #dropZone::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                transparent,
+                transparent,
+                transparent,
+                rgba(59, 130, 246, 0.1)
+            );
+            transform: rotate(30deg);
+            transition: all 0.6s ease;
+        }
+
+        #dropZone:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            border-color: var(--cyber-purple);
+        }
+
+        #dropZone:hover::before {
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { left: -50%; }
+            100% { left: 150%; }
+        }
+
+        #dropZone.dragover {
+            background: linear-gradient(145deg, #1e3a8a, #1e40af);
+            border-color: var(--cyber-purple);
+        }
+
+        #analyzeBtn {
+            background: linear-gradient(135deg, var(--primary-blue), var(--cyber-purple));
+            border: none;
+            font-weight: 600;
+            letter-spacing: 1px;
+            padding: 12px 30px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #analyzeBtn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
+        }
+
+        #analyzeBtn:active {
+            transform: translateY(1px);
+        }
+
+        #analyzeBtn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+            transition: all 0.3s ease;
+        }
+
+        #analyzeBtn:hover::after {
+            left: 100%;
+        }
+
+        .badge {
+            font-size: 1.2rem !important;
+            padding: 10px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .badge:hover {
+            transform: scale(1.05);
+        }
+
+        #pieContainer {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            transition: all 0.5s ease;
+        }
+
+        #pieContainer:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        #resultsContainer {
+            background: linear-gradient(145deg, var(--primary-dark), var(--card-bg));
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: perspective(1000px) rotateX(5deg);
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        #resultsContainer.show {
+            opacity: 1;
+            height: auto;
+            transform: perspective(1000px) rotateX(0);
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .table {
+            color: var(--text-light);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, var(--primary-blue), var(--cyber-purple));
+            border: none;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .table tbody tr {
+            background-color: rgba(30, 41, 59, 0.7);
+            transition: all 0.3s ease;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(51, 65, 85, 0.9);
+            transform: translateX(5px);
+        }
+
+        .btn-outline-success, .btn-outline-danger {
+            border-width: 2px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-success:hover {
+            background: linear-gradient(135deg, var(--cyber-green), #059669);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-outline-danger:hover {
+            background: linear-gradient(135deg, var(--cyber-red), #dc2626);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        #selectedFile {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        .file-format-info {
+            color: var(--primary-blue-light);
+            font-weight: 600;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 0.25em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: rotate 0.75s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+
+        .pagination-info {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .progress-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 3px;
+        }
+
+        .progress-bar {
+            height: 20px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, var(--primary-blue), var(--cyber-purple));
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        #alertContainer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .custom-alert {
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            border: none;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .custom-alert.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .custom-alert.hide {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+
+        .custom-alert::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: currentColor;
+        }
+
+        .custom-allet-icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .custom-alert-content {
+            flex-grow: 1;
+        }
+
+        .custom-alert-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 0.5px;
+        }
+
+        .custom-alert-message {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .custom-alert-close {
+            background: none;
+            border: none;
+            color: inherit;
+            opacity: 0.7;
+            cursor: pointer;
+            margin-left: 15px;
+            font-size: 1.2rem;
+            transition: opacity 0.2s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .custom-alert-close:hover {
+            opacity: 1;
+        }
+
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border-left: 5px solid #10b981;
+        }
+
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border-left: 5px solid #ef4444;
+        }
+
+        .alert-warning {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border-left: 5px solid #f59e0b;
+        }
+
+        .alert-info {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+            border-left: 5px solid #3b82f6;
+        }
+
+        @media (max-width: 768px) {
+            #dropZone {
+                padding: 30px 15px;
+            }
+            
+            #resultsContainer {
+                padding: 20px 15px;
+            }
+
+            #alertContainer {
+                max-width: calc(100% - 40px);
+                top: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-3"><i class="fas fa-shield-alt me-3"></i>Network Threat Analyzer</h1>
+            <p class="lead">Upload your network traffic data to detect malicious activity</p>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div id="dropZone" class="p-5 text-center mb-4" role="button" aria-label="File upload area" tabindex="0">
+                    <i class="fas fa-cloud-upload-alt fa-3x mb-3" style="color: var(--primary-blue-light);"></i>
+                    <h4 class="mb-3">Drag & Drop Your CSV File Here</h4>
+                    <p class="mb-4">Or click to select a file from your computer</p>
+                    <p class="file-format-info">Supported format: CSV (Max 200MB)</p>
+                    <input type="file" id="fileInput" accept=".csv" class="d-none">
+                    <div id="selectedFile" class="mt-3">
+                        <i class="fas fa-file-alt me-2"></i><span>No file selected.</span>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button id="analyzeBtn" class="btn btn-lg" disabled>
+                        <span id="buttonText">ANALYZE FILE</span>
+                        <span id="spinner" class="spinner-border spinner-border-sm visually-hidden" role="status"></span>
+                    </button>
+                </div>
+                <div id="resultsContainer">
+                    <div class="row mb-4">
+                        <div class="col-md-12 mb-3">
+                            <h3 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Analysis Summary</h3>
+                            <div class="text-center mb-4">
+                                <h5>Total Records Analyzed: <span id="totalRecordsCount">0</span></h5>
+                            </div>
+                            <div class="d-flex justify-content-around align-items-center">
+                                <div class="text-center">
+                                    <span class="badge bg-success mb-2">SAFE</span>
+                                    <h2 id="safeCount">0</h2>
+                                </div>
+                                <div id="pieContainer">
+                                    <canvas id="pieChart"></canvas>
+                                </div>
+                                <div class="text-center">
+                                    <span class="badge bg-danger mb-2">MALICIOUS</span>
+                                    <h2 id="maliciousCount">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h3 class="mb-3"><i class="fas fa-download me-2"></i>Export Results</h3>
+                            <div class="d-flex flex-wrap justify-content-center gap-3">
+                                <button id="downloadSafeBtn" class="btn btn-outline-success" disabled>
+                                    <i class="fas fa-file-export me-2"></i>Download Safe Records
+                                </button>
+                                <button id="downloadMaliciousBtn" class="btn btn-outline-danger" disabled>
+                                    <i class="fas fa-file-export me-2"></i>Download Malicious Records
+                                </button>
+                                <button id="downloadAllBtn" class="btn btn-outline-primary" disabled>
+                                    <i class="fas fa-file-export me-2"></i>Download All Records
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="mb-3"><i class="fas fa-table me-2"></i>Data Preview</h3>
+                    <div class="pagination-info mb-2">
+                        Showing <span id="showingFrom">1</span>-<span id="showingTo">50</span> of <span id="totalRecords">0</span> records
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="resultsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Protocol</th>
+                                    <th>Prediction</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination-controls">
+                        <div>
+                            <button id="prevPage" class="btn btn-outline-secondary" disabled>
+                                <i class="fas fa-chevron-left me-1"></i> Previous
+                            </button>
+                            <button id="nextPage" class="btn btn-outline-secondary ms-2" disabled>
+                                Next <i class="fas fa-chevron-right ms-1"></i>
+                            </button>
+                        </div>
+                        <div>
+                            <span id="pageInfo">Page 1 of 1</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="alertContainer"></div>
+    
+    <div id="loadingOverlay" class="loading-overlay visually-hidden">
+        <div class="loading-spinner"></div>
+        <h3>Analyzing your file...</h3>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+        <p id="loadingText">Initializing analysis...</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('fileInput');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const selectedFile = document.getElementById('selectedFile');
+            const dropZone = document.getElementById('dropZone');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const safeCount = document.getElementById('safeCount');
+            const maliciousCount = document.getElementById('maliciousCount');
+            const totalRecordsCount = document.getElementById('totalRecordsCount');
+            const chartCtx = document.getElementById('pieChart').getContext('2d');
+            const spinner = document.getElementById('spinner');
+            const buttonText = document.getElementById('buttonText');
+            const resultsTable = document.getElementById('resultsTable');
+            const tableBody = resultsTable.querySelector('tbody');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const showingFrom = document.getElementById('showingFrom');
+            const showingTo = document.getElementById('showingTo');
+            const totalRecords = document.getElementById('totalRecords');
+            const prevPageBtn = document.getElementById('prevPage');
+            const nextPageBtn = document.getElementById('nextPage');
+            const pageInfo = document.getElementById('pageInfo');
+            const downloadSafeBtn = document.getElementById('downloadSafeBtn');
+            const downloadMaliciousBtn = document.getElementById('downloadMaliciousBtn');
+            const downloadAllBtn = document.getElementById('downloadAllBtn');
+            const loadingText = document.getElementById('loadingText');
+            const progressBar = document.getElementById('progressBar');
+            const alertContainer = document.getElementById('alertContainer');
+
+            let allRecords = [];
+            let currentPage = 1;
+            const recordsPerPage = 50;
+            let totalPages = 1;
+            let pieChart;
+
+            function showAlert(title, message, type = 'danger', duration = 5000) {
+                const alertId = 'alert-' + Date.now();
+                const icons = {
+                    success: 'fa-circle-check',
+                    danger: 'fa-circle-exclamation',
+                    warning: 'fa-triangle-exclamation',
+                    info: 'fa-circle-info'
+                };
+                
+                const alertEl = document.createElement('div');
+                alertEl.className = `custom-alert alert-${type}`;
+                alertEl.id = alertId;
+                alertEl.innerHTML = `
+                    <i class="fas ${icons[type] || 'fa-circle-info'} custom-allet-icon"></i>
+                    <div class="custom-alert-content">
+                        <div class="custom-alert-title">${title}</div>
+                        <div class="custom-alert-message">${message}</div>
+                    </div>
+                    <button class="custom-alert-close" aria-label="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                alertContainer.appendChild(alertEl);
+                
+                void alertEl.offsetWidth;
+                alertEl.classList.add('show');
+                
+                const closeBtn = alertEl.querySelector('.custom-alert-close');
+                closeBtn.addEventListener('click', () => {
+                    dismissAlert(alertId);
+                });
+                
+                if (duration > 0) {
+                    setTimeout(() => {
+                        dismissAlert(alertId);
+                    }, duration);
+                }
+            }
+            
+            function dismissAlert(alertId) {
+                const alertEl = document.getElementById(alertId);
+                if (alertEl) {
+                    alertEl.classList.remove('show');
+                    alertEl.classList.add('hide');
+                    
+                    setTimeout(() => {
+                        alertEl.remove();
+                    }, 400);
+                }
+            }
+
+            function updateProgress(percentage, message) {
+                progressBar.style.width = `${percentage}%`;
+                progressBar.textContent = `${Math.round(percentage)}%`;
+                loadingText.textContent = message;
+            }
+
+            function animateCount(element, start, end, duration = 1000) {
+                let startTimestamp = null;
+                const step = (timestamp) => {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    element.textContent = Math.floor(progress * (end - start) + start);
+                    if (progress < 1) window.requestAnimationFrame(step);
+                };
+                window.requestAnimationFrame(step);
+            }
+
+            function updatePieChart(safe, malicious) {
+                if (pieChart) pieChart.destroy();
+                pieChart = new Chart(chartCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Safe', 'Malicious'],
+                        datasets: [{
+                            data: [safe, malicious],
+                            backgroundColor: ['#10b981', '#ef4444'],
+                            borderColor: ['#0f172a', '#0f172a'],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#f8fafc',
+                                    font: {
+                                        family: 'Montserrat',
+                                        size: 14
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function displayPage(page) {
+                const startIndex = (page - 1) * recordsPerPage;
+                const endIndex = Math.min(startIndex + recordsPerPage, allRecords.length);
+                const pageRecords = allRecords.slice(startIndex, endIndex);
+                showingFrom.textContent = startIndex + 1;
+                showingTo.textContent = endIndex;
+                totalRecords.textContent = allRecords.length;
+                pageInfo.textContent = `Page ${page} of ${totalPages}`;
+                tableBody.innerHTML = '';
+
+                pageRecords.forEach((record, index) => {
+                    const tr = document.createElement('tr');
+                    const rowNumber = startIndex + index + 1;
+                    const cells = [
+                        rowNumber,
+                        record['Protocol'] || 'N/A',
+                        record['Prediction'] || 'Unknown'
+                    ];
+                    cells.forEach((value, i) => {
+                        const td = document.createElement('td');
+                        td.textContent = value;
+                        if (i === 2) {
+                            if (value === 'Malicious') td.classList.add('text-danger', 'fw-bold');
+                            else if (value === 'Safe') td.classList.add('text-success', 'fw-bold');
+                        }
+                        tr.appendChild(td);
+                    });
+                    tableBody.appendChild(tr);
+                });
+
+                prevPageBtn.disabled = page <= 1;
+                nextPageBtn.disabled = page >= totalPages;
+                resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            function showResultsContainer() {
+                resultsContainer.classList.add('show');
+            }
+
+            async function sendToAPI(file) {
+                try {
+                    updateProgress(10, "Uploading file to server...");
+                    
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    updateProgress(30, "Analyzing file structure...");
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    updateProgress(50, "Processing records...");
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    updateProgress(70, "Detecting threats...");
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    updateProgress(90, "Finalizing results...");
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    const response = await fetch('/analyze', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        let errorText = await response.text();
+                        try {
+                            const errorData = JSON.parse(errorText);
+                            if (errorData.error && errorData.error.includes('Length of values')) {
+                                errorText = "Data processing error: The uploaded file has inconsistent data structure. Please check your CSV file for missing or extra values in rows.";
+                            } else {
+                                errorText = errorData.error || errorData.message || errorText;
+                            }
+                        } catch (e) {
+                            console.error('Error parsing error response:', e);
+                        }
+                        throw new Error(errorText);
+                    }
+
+                    const result = await response.json();
+
+                    if (!result.success) {
+                        let errorMessage = result.error || 'Unknown error occurred.';
+                        if (errorMessage.includes('Length of values')) {
+                            errorMessage = "Data processing error: The uploaded file has inconsistent data structure. Please check your CSV file for missing or extra values in rows.";
+                        }
+                        throw new Error(errorMessage);
+                    }
+
+                    if (!Array.isArray(result.data)) {
+                        throw new Error("Invalid data format received from server");
+                    }
+
+                    if (result.data.length > 0) {
+                        const firstRecord = result.data[0];
+                        if (!firstRecord.hasOwnProperty('Protocol') || !firstRecord.hasOwnProperty('Prediction')) {
+                            throw new Error("Data format error: Missing required fields in analysis results");
+                        }
+                    }
+
+                    updateProgress(100, "Analysis complete!");
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    return result.data;
+                } catch (error) {
+                    console.error('API error:', error);
+                    let errorMessage = error.message;
+                    
+                    if (errorMessage.includes('Length of values')) {
+                        errorMessage = "Data processing error: The uploaded file has inconsistent data structure. Please check your CSV file for missing or extra values in rows and try again.";
+                    } else if (error.message.includes('Failed to fetch')) {
+                        errorMessage = "Network error: Unable to connect to the server. Please check your internet connection.";
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
+            }
+
+            function convertToCSV(records) {
+                const headers = ['ID', 'Protocol', 'Prediction'];
+                const csvRows = [];
+                
+                // Add headers
+                csvRows.push(headers.join(','));
+                
+                // Add data rows
+                records.forEach((record, index) => {
+                    const values = [
+                        index + 1, // ID
+                        record.Protocol || 'N/A',
+                        record.Prediction || 'Unknown'
+                    ];
+                    csvRows.push(values.join(','));
+                });
+                
+                return csvRows.join('\n');
+            }
+
+            function downloadCSV(csvData, filename) {
+                const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            async function downloadRecords(type) {
+                try {
+                    loadingOverlay.classList.remove('visually-hidden');
+                    updateProgress(10, `Preparing ${type} records...`);
+                    
+                    let filteredRecords = [];
+                    if (type === 'all') {
+                        filteredRecords = allRecords;
+                    } else {
+                        filteredRecords = allRecords.filter(r => 
+                            r.Prediction === (type === 'safe' ? 'Safe' : 'Malicious')
+                        );
+                    }
+
+                    if (filteredRecords.length === 0) {
+                        showAlert('No Records', `No ${type} records found to download`, 'warning');
+                        loadingOverlay.classList.add('visually-hidden');
+                        return;
+                    }
+
+                    updateProgress(30, "Formatting data...");
+                    
+                    // Convert to CSV with only ID, Protocol, and Prediction columns
+                    const csvData = convertToCSV(filteredRecords);
+                    
+                    updateProgress(70, "Creating download file...");
+                    
+                    updateProgress(90, "Starting download...");
+                    
+                    const filename = `${type}_records_${new Date().toISOString().slice(0,10)}.csv`;
+                    downloadCSV(csvData, filename);
+
+                    updateProgress(100, "Download complete!");
+                    showAlert('Download Started', `Your ${type} records are downloading`, 'success');
+
+                } catch (error) {
+                    console.error('Download failed:', error);
+                    
+                    let errorMessage = error.message;
+                    if (errorMessage.includes('Failed to fetch')) {
+                        errorMessage = 'Network error: Could not connect to server';
+                    } else if (errorMessage.includes('500')) {
+                        errorMessage = 'Server error occurred. Please try again later.';
+                    } else if (errorMessage.includes('NetworkError')) {
+                        errorMessage = 'Network connection failed. Please check your internet connection.';
+                    }
+                    
+                    showAlert('Download Failed', errorMessage, 'danger');
+                } finally {
+                    setTimeout(() => {
+                        loadingOverlay.classList.add('visually-hidden');
+                    }, 1000);
+                }
+            }
+
+            downloadAllBtn.addEventListener('click', () => downloadRecords('all'));
+            downloadSafeBtn.addEventListener('click', () => downloadRecords('safe'));
+            downloadMaliciousBtn.addEventListener('click', () => downloadRecords('malicious'));
+
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayPage(currentPage);
+                }
+            });
+
+            nextPageBtn.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayPage(currentPage);
+                }
+            });
+
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            ['dragleave', 'dragend'].forEach(type => {
+                dropZone.addEventListener(type, () => dropZone.classList.remove('dragover'));
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    const file = e.dataTransfer.files[0];
+                    if (file.name.endsWith('.csv')) {
+                        fileInput.files = e.dataTransfer.files;
+                        handleFileSelection(file);
+                    } else {
+                        showAlert('Invalid File Type', 'Please upload a CSV file only.', 'warning');
+                    }
+                }
+            });
+
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length) handleFileSelection(fileInput.files[0]);
+                else {
+                    analyzeBtn.disabled = true;
+                    selectedFile.innerHTML = '<i class="fas fa-file-alt me-2"></i><span>No file selected.</span>';
+                }
+            });
+
+            function handleFileSelection(file) {
+                if (file.size > 200 * 1024 * 1024) {
+                    showAlert('File Too Large', 'File size exceeds 200MB limit. Please upload a smaller file.', 'warning');
+                    fileInput.value = '';
+                    analyzeBtn.disabled = true;
+                    selectedFile.innerHTML = '<i class="fas fa-file-alt me-2"></i><span>No file selected.</span>';
+                    return;
+                }
+
+                analyzeBtn.disabled = false;
+                selectedFile.innerHTML = `<i class="fas fa-file-alt me-2"></i><span>${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)</span>`;
+                showAlert('File Selected', `${file.name} is ready for analysis`, 'info');
+            }
+
+            analyzeBtn.addEventListener('click', async () => {
+                const file = fileInput.files[0];
+                if (!file) {
+                    showAlert('No File Selected', 'Please select a CSV file first.', 'warning');
+                    return;
+                }
+
+                loadingOverlay.classList.remove('visually-hidden');
+                spinner.classList.remove('visually-hidden');
+                buttonText.textContent = 'ANALYZING...';
+                analyzeBtn.disabled = true;
+
+                try {
+                    allRecords = await sendToAPI(file);
+                    
+                    if (!Array.isArray(allRecords)) {
+                        throw new Error("Invalid data format received from server");
+                    }
+
+                    const safe = allRecords.filter(r => r.Prediction === 'Safe');
+                    const malicious = allRecords.filter(r => r.Prediction === 'Malicious');
+
+                    totalPages = Math.ceil(allRecords.length / recordsPerPage);
+                    currentPage = 1;
+                    animateCount(safeCount, 0, safe.length);
+                    animateCount(maliciousCount, 0, malicious.length);
+                    totalRecordsCount.textContent = allRecords.length;
+                    updatePieChart(safe.length, malicious.length);
+                    displayPage(currentPage);
+
+                    downloadAllBtn.disabled = downloadSafeBtn.disabled = downloadMaliciousBtn.disabled = false;
+                    showResultsContainer();
+                    showAlert('Analysis Complete', 'Your file has been successfully analyzed!', 'success');
+                } catch (err) {
+                    console.error(err);
+                    
+                    let errorMessage = err.message;
+                    if (errorMessage.includes('Length of values')) {
+                        errorMessage = "Data processing error: The uploaded file has inconsistent data structure. Please check your CSV file for missing or extra values in rows and try again.";
+                    }
+                    
+                    showAlert('Analysis Failed', errorMessage, 'danger');
+                } finally {
+                    loadingOverlay.classList.add('visually-hidden');
+                    spinner.classList.add('visually-hidden');
+                    buttonText.textContent = 'ANALYZE FILE';
+                    analyzeBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
