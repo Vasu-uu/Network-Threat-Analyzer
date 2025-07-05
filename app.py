@@ -4,10 +4,12 @@ import joblib
 from utils.feature_extraction import extract_features_from_df
 from io import BytesIO
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
 CORS(app)
 
+# Load pre-trained model
 model = joblib.load('model/rf_model.pkl')
 
 @app.route('/')
@@ -54,4 +56,6 @@ def download():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Use dynamic port for cloud deployment (e.g., Render)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
