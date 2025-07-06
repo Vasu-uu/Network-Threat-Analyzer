@@ -27,7 +27,7 @@ Built with a **Random Forest machine learning model**, the system is deployed vi
 * 🧠 AI-powered Random Forest model trained on UNSW-NB15
 * 📈 Visualization with **Chart.js** (pie chart: malicious vs. safe)
 * 🌐 Flask-based web interface for ease of use
-* 🧾 Display of predicted traffic labels with IP/Port details
+* 🧾 Display of predicted traffic labels with protocol and classification only (e.g., Safe/Malicious)
 
 ---
 
