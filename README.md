@@ -1,6 +1,9 @@
 # 🛡️ AI-Powered Network Threat Classification System
 
-**Intel Unnati Industrial Training 2025 Problem Statement 1: Network Security Team Name: Execthron**
+**Intel Unnati Industrial Training 2025**  
+**Problem Statement 1: Network Security**  
+**Team Name: Execthron**
+
 
 ---
 
