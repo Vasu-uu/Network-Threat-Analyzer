@@ -59,6 +59,36 @@ Includes:
 
 ---
 
+
+## ✅ Outcomes
+
+* Achieved **accurate classification** of malicious vs. safe traffic using a Random Forest model.
+* Designed a **user-friendly interface** for uploading and analyzing `.csv` network logs.
+* Successfully integrated **real-time visualization** of predictions using Chart.js.
+* Demonstrated the practicality of ML models in supporting **automated network threat detection** in a lightweight environment.
+
+---
+
+## ⚠️ Limitations
+
+* The model is trained only on **offline flow data** and does not process **live packet capture**.
+* Limited to `.csv` files with specific feature formatting; **data preprocessing must match training setup**.
+* Accuracy and generalization may reduce on **real-world enterprise networks** due to differences from training data.
+* Does not show full metadata like source/destination IP, time, etc., which can help with deeper threat investigation.
+
+---
+
+## 🚀 Future Scope
+
+* Extend the system to support **real-time packet sniffing** using tools like `PyShark` or `Scapy`.
+* Add **detailed analytics** with IP/port-level information and interactive dashboards.
+* Integrate **alerting systems** (e.g., email, Telegram) for critical threat detections.
+* Experiment with **deep learning models** (e.g., LSTM, CNN) for improved accuracy on complex patterns.
+* Provide **cloud deployment** for scalability and integration with existing SIEM tools.
+
+---
+
+
 ## ⚙️ Installation Guide
 
 ### 1️⃣ Clone the Repository
