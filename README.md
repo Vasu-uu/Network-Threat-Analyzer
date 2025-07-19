@@ -9,7 +9,7 @@
 
 ## Demo
 
-[Watch Demo Video](https://drive.google.com/file/d/1SIK_kruyaB2uLdFsY7iY5bJJZ7SaKgWz/view?usp=drivesdk)
+[Watch Demo Video](https://vimeo.com/1102796520?share=copy#t=0)
 
 ---
 
